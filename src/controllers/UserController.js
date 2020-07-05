@@ -1,4 +1,8 @@
+const { uuid } = require('uuidv4');
+const { hash } = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const authConfig = require('../config/auth.json');
 
 module.exports = {
   async index(req, res) {
@@ -8,15 +12,30 @@ module.exports = {
   },
 
   async store(req, res) {
+    function genetateToken(params = {}) {
+      return jwt.sign(params, authConfig.secret, {
+        expiresIn: 86400, // segundos
+      });
+    }
     const { name, email, password, graduation } = req.body;
 
+    const checkUserExists = await User.findOne({ where: { email } });
+    if (checkUserExists) {
+      return res.json({ error: 'Email address already used' }, 401);
+    }
+
+    const hashedPassword = await hash(password, 8);
+
     const user = await User.create({
+      id: uuid(),
       name,
       email,
-      password,
+      password: hashedPassword,
       graduation,
     });
-
-    return res.json(user);
+    return res.send({
+      user,
+      token: genetateToken({ id: user.id }),
+    });
   },
 };
