@@ -14,14 +14,14 @@ module.exports = {
   async store(req, res) {
     function genetateToken(params = {}) {
       return jwt.sign(params, authConfig.secret, {
-        expiresIn: 86400, // segundos
+        expiresIn: '1d',
       });
     }
     const { name, email, password, graduation } = req.body;
 
     const checkUserExists = await User.findOne({ where: { email } });
     if (checkUserExists) {
-      return res.json({ error: 'Email address already used' }, 401);
+      return res.json({ error: 'E-mail address already used' }, 401);
     }
 
     const hashedPassword = await hash(password, 8);
